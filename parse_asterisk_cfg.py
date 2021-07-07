@@ -26,12 +26,12 @@ def loadFile():
     if fn == '':
         return
     textbox.delete('1.0', 'end')
-    textbox.insert('1.0', open(fn, 'rt').read())
+    textbox.insert('1.0', open(fn, 'rt', encoding="utf8").read())
     print('FN = ', fn)
     f = getFileHandler(fn)
-    sip_conf = f.readlines()
+    sip_conf_list = f.readlines()
     ary.clear()
-    ary = parseAsteriskCfg(sip_conf)
+    ary = parseAsteriskCfg(sip_conf_list)
 
 
 def saveFile():
@@ -40,7 +40,7 @@ def saveFile():
         return
     if not fn.endswith(".txt"):
         fn += ".txt"
-    open(fn, 'wt').write(textbox.get('1.0', 'end'))
+    open(fn, 'wt', encoding="utf8").write(textbox.get('1.0', 'end'))
 
 def doProc():
     global ary
@@ -56,7 +56,7 @@ def doProc():
 def getFileHandler(filename):
     if os.path.isfile(filename) and os.access(filename, os.R_OK):
         try:
-            fn = open(filename, "r")
+            fn = open(filename, "r", encoding="utf8")
         except EOFError as ex:
             print("Caught the EOF error.")
             raise ex
@@ -70,36 +70,19 @@ def getFileHandler(filename):
         print("Either the file is missing or not readable")
         exit(0)
 
-def parseAsteriskCfg(emailList):
-    print("Email List:", emailList)
+def parseAsteriskCfg(sip_conf_List):
+    #print("Sip_Conf List:", sip_conf_List)
+    print(sip_conf_List)
     returnList = []
     dec_email = ''
     i = 1
-    for email in emailList:
-        email = email.replace('\n', '')
-        m = re.findall(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', email)
+    for line in sip_conf_List:
+        line = line.replace('\n', '')
+        m = re.findall(r'[\w\.-]+@[\w\.-]+(\.[\w]+)+', line)
         if m:
-            dec_email = dec_email + email + '; '
-            if (i % 10 == 0):
-                dec_email = re.sub(r'(.*)(; )($)', r'\1\3', dec_email)
-                prefix = ""
-                if ((i // 10) % 2 == 0):
-                    prefix = "Cc: "
-                else:
-                    prefix = "To: "
-                returnList.append(prefix+dec_email)
-                dec_email = ''
-            if (i % 20 == 0):
-                print("")
+            dec_email = dec_email + line + '; '
             i = i + 1
-    if dec_email:
-        #dec_email = dec_email[:-2]  # remove 2 chars '; ' at the end of line.
-        if prefix == "Cc: " :
-            prefix = "To: "
-        else :
-            prefix = "Cc: "
-        dec_email = re.sub(r'(.*)(; )($)', r'\1\3', dec_email)
-        returnList.append(prefix + dec_email)
+        returnList.append(line)
     return returnList
 
 '''
